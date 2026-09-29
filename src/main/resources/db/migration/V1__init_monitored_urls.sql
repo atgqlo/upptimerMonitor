@@ -1,0 +1,9 @@
+CREATE TABLE monitored_urls (
+    id BIGSERIAL PRIMARY KEY,
+    url VARCHAR(500) NOT NULL,
+    recipient VARCHAR(255) NOT NULL,
+    channel VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'UNKNOWN',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_checked_at TIMESTAMP
+);
