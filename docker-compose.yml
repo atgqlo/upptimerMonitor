@@ -1,39 +1,46 @@
+version: '3.8'
+
 services:
   monitor_db:
     image: postgres:15-alpine
-    container_name: monitor_db
     environment:
-      POSTGRES_DB: monitordb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${DB_NAME:-monitordb}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     ports:
       - "5433:5432"
-    volumes:
-      - monitor_db_data:/var/lib/postgresql/data
+    networks:
+      - uptime_local_net
 
   monitor_redis:
     image: redis:7-alpine
-    container_name: monitor_redis
     ports:
       - "6379:6379"
+    networks:
+      - uptime_local_net
 
-  monitor_kafka:
-    image: apache/kafka:3.8.0
-    container_name: monitor_kafka
+  uptime_app:
+    build: .
     ports:
-      - "9092:9092"
+      - "8081:8081"
+    depends_on:
+      - monitor_db
+      - monitor_redis
     environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      - DB_HOST=monitor_db
+      - DB_PORT=5432
+      - REDIS_HOST=monitor_redis
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=monitor_kafka:29092
+      - DB_NAME=${DB_NAME:-monitordb}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+    networks:
+      - uptime_local_net
+      - shared_kafka_net
 
-volumes:
-  monitor_db_data:
+networks:
+  uptime_local_net:
+    driver: bridge
+  shared_kafka_net:
+    external: true
+    name: shared_kafka_network

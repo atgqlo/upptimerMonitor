@@ -1,9 +1,10 @@
 spring:
+
   application:
     name: uptime-monitor
 
   datasource:
-    url: jdbc:postgresql://localhost:${DB_PORT:5433}/${DB_NAME:monitordb}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:monitordb}
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:password}
 
@@ -22,10 +23,13 @@ spring:
       port: ${REDIS_PORT:6379}
 
   kafka:
-    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
 
 server:
   port: 8081
+
